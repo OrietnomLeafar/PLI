@@ -6,11 +6,16 @@
  * @version 1.0
  */
 
+
 import java.awt.event.*; 
+
 import javax.media.opengl.*;
 import javax.media.opengl.glu.*;
+
 import com.sun.opengl.util.*;
+
 import java.nio.FloatBuffer;
+import java.util.LinkedList;
 
 public class RendererImagem extends MouseAdapter implements GLEventListener, KeyListener
 {
@@ -22,7 +27,8 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 	private double fAspect;
 	private Imagem imgs[], nova;
 	private int sel;
-	
+
+	private int img[][];
 	/**
 	 * Construtor da classe RendererImagem que recebe um array com as imagens
 	 */
@@ -52,7 +58,7 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 		drawable.setGL(new DebugGL(gl));        
 
 		gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		
+
 		// Define a janela de visualizaï¿½Ã£o 2D
 		gl.glMatrixMode(GL.GL_PROJECTION);
 		glu.gluOrtho2D(0,1,0,1);
@@ -73,13 +79,13 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 		// Desenha a imagem original
 		gl.glRasterPos2f(0,0);
 		gl.glDrawPixels(imgs[sel].getWidth(), imgs[sel].getHeight(),
-			       GL.GL_BGR, GL.GL_UNSIGNED_BYTE, imgs[sel].getData());
+				GL.GL_BGR, GL.GL_UNSIGNED_BYTE, imgs[sel].getData());
 
 		// Desenha a imagem resultante
 		if(nova!=null) {
 			gl.glRasterPos2f(0.5f,0);
 			gl.glDrawPixels(nova.getWidth(), nova.getHeight(),
-			       GL.GL_BGR, GL.GL_UNSIGNED_BYTE, nova.getData());
+					GL.GL_BGR, GL.GL_UNSIGNED_BYTE, nova.getData());
 		}
 	}
 
@@ -135,40 +141,40 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 
 		switch (e.getKeyCode())
 		{
-			case KeyEvent.VK_1:		// Para exibir a imagem "original": nÃ£o faz nada
-										System.out.println("Negative");
-										negative();
-										break;
-			case KeyEvent.VK_2:		// Para converter a imagem para tons de cinza
-										System.out.println("Grayscale");
-										convertToGrayScale();
-										break;     
-			case KeyEvent.VK_3:		// Para converter a imagem para preto e branco  
-										System.out.println("B&W");
-										convertToGrayScale();
-										convertToBlackAndWhite();
-										break;
-			case KeyEvent.VK_4:		// Para aplicar um filtro passa-alta (realce de bordas)
-										System.out.println("High pass");
-										convertToGrayScale();
-										highPass();
-										break;
-			case KeyEvent.VK_5:		// Para aplicar um filtro passa-baixa (suavizaÃ§Ã£o)
-										System.out.println("Low pass");
-										convertToGrayScale();
-										lowPass();
-										break;
-			case KeyEvent.VK_6:		// Para gerar a imagem atravï¿½s da tï¿½cnica de posterizaï¿½Ã£o
-										System.out.println("Posterize");
-										posterize();
-										break; 	
-			case KeyEvent.VK_7:		// Para converter a imagem para tons de sï¿½pia  
-										System.out.println("Sepia");
-										convertToGrayScale();
-										sepia();
-										break; 
-			case KeyEvent.VK_ESCAPE:	System.exit(0);
-										break;
+		case KeyEvent.VK_1:		// Para exibir a imagem "original": nÃ£o faz nada
+			System.out.println("Negative");
+			negative();
+			break;
+		case KeyEvent.VK_2:		// Para converter a imagem para tons de cinza
+			System.out.println("Grayscale");
+			convertToGrayScale();
+			break;     
+		case KeyEvent.VK_3:		// Para converter a imagem para preto e branco  
+			System.out.println("B&W");
+			convertToGrayScale();
+			convertToBlackAndWhite();
+			break;
+		case KeyEvent.VK_4:		// Para aplicar um filtro passa-alta (realce de bordas)
+			System.out.println("High pass");
+			convertToGrayScale();
+			highPass();
+			break;
+		case KeyEvent.VK_5:		// Para aplicar um filtro passa-baixa (suavizaÃ§Ã£o)
+			System.out.println("Low pass");
+			convertToGrayScale();
+			lowPass();
+			break;
+		case KeyEvent.VK_6:		// Para gerar a imagem atravï¿½s da tï¿½cnica de posterizaï¿½Ã£o
+			System.out.println("Posterize");
+			posterize();
+			break; 	
+		case KeyEvent.VK_7:		// Para converter a imagem para tons de sï¿½pia  
+			System.out.println("Sepia");
+			convertToGrayScale();
+			sepia();
+			break; 
+		case KeyEvent.VK_ESCAPE:	System.exit(0);
+		break;
 		}  
 		glDrawable.display();
 	}
@@ -182,7 +188,7 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 	 * Método definido na interface KeyListener.
 	 */       
 	public void keyReleased(KeyEvent e) { }
-    
+
 	/**
 	 * Método que converte a imagem para tons de cinza.
 	 */       
@@ -194,22 +200,22 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 		//			getPixel/getR/getG/getB e setPixel da classe Imagem
 		// 		Altere apenas o atributo nova.
 		//     Experimente executar e testar nas imagens disponibilizadas.
-		
+
 		int R=0, G=0, B=0;
 		int cinza = 0;
-		
+
 		for (int i = 0; i < nova.getWidth(); i++) {
 			for (int j = 0; j < nova.getHeight(); j++) {
 				R = nova.getR(i, j);
 				G = nova.getG(i, j);
 				B = nova.getB(i, j);
-				
+
 				cinza = (R+G+B)/3;
-				
+
 				nova.setPixel(i, j, cinza, cinza, cinza);
 			}
 		}
-		
+
 		System.out.println(nova.getWidth()+" "+nova.getHeight());
 
 	}    
@@ -233,48 +239,48 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 		//		que represente a média entre os valores de densidade encontrados 
 		//		na imagem. Altere apenas o atributo nova.
 		//      Experimente executar e testar nas imagens disponibilizadas.		
-		
+
 		int media = 0;
 		int wid = nova.getWidth();
 		int hei = nova.getHeight();
-		
+
 		for (int i = 0; i < wid; i++) {
 			for (int j = 0; j < hei; j++) {
 				media += nova.getB(i, j);
 			}
 		}
-		
+
 		media = media /(wid*hei);
-		
+
 		for (int i = 0; i < wid; i++) {
 			for (int j = 0; j < hei; j++) {
 				if(nova.getB(i, j) > media){
 					nova.setPixel(i, j, 0, 0, 0);
-					
+
 				}else{
 					nova.setPixel(i, j, 255, 255, 255);
 				}
 			}
 		}
 	}
-	
+
 	public void negative(){
 		int actR = 0,actG = 0,actB = 0;
 		int newR, newG, newB;
-		
+
 		int wid = nova.getWidth();
 		int hei = nova.getHeight();
-		
+
 		for (int i = 0; i < wid; i++) {
 			for (int j = 0; j < hei; j++) {
 				actR = nova.getR(i, j);
 				actG = nova.getG(i, j);
 				actB = nova.getB(i, j);
-				
+
 				newR = 255 - actR;
 				newG = 255 - actG;
 				newB = 255 - actB;
-				
+
 				nova.setPixel(i, j, newR, newG, newB);
 			}
 		}
@@ -289,31 +295,31 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 		int count =0;
 		int wid = nova.getWidth();
 		int hei = nova.getHeight();
-		int [][]auxV = new int[wid][hei];
-		int [][]auxH = new int[wid][hei];
-		double G = 0;
-		double alfa = 5.6;
+		int [][]GV = new int[wid][hei];
+		int [][]GH = new int[wid][hei];
+		double [][]G = new double[wid][hei];
+		double Gb = 0;
+		double alfa = 4.7;
 		double T = 0;
-		int max =0;
-		
+
+
 		for(int x=0; x<wid-2; x++){
 			for(int y=0; y<hei-2; y++){
-				
+
 				int somav = 0;
 				int somah = 0;
-				
+
 				for(int i=0; i<3; i++){
 					for(int j=0; j<3; j++){
 						int p = nova.getR(x+i,y+j);
-						
+
 						somav += p * vert[i][j];
 						somah += p * hor[i][j]; 
-						
+
+
 						if(count<20){
 							System.out.println(p +" "+ vert[i][j]);
-							if(somav>max){
-								max = somav;
-							}
+
 							if(i+j == 4){
 								System.out.println(somav);
 								System.out.println();
@@ -321,33 +327,156 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 								System.out.println("parcial: "+somav);
 							}
 						}
-						
+
 					}
 				}
 				count++;
-				
-				auxV[x+1][y+1] =(int) somav;
 
-				auxH[x+1][y+1] =(int) somah;
-		
+				GV[x+1][y+1] =(int) somav;
+
+				GH[x+1][y+1] =(int) somah;
+
 				double r = (somah * somah) + (somav * somav);
 				r = Math.sqrt(r);
-				
-				G += r;
+				G[x+1][y+1] = r;
+				Gb += r;
 			}
 		}
-		System.out.println("MAX "+max);
-		System.out.println("G "+G);
-		G = G/(wid*hei);
-		System.out.println("Gb "+ G);
-		
+
+		System.out.println("G "+Gb);
+		Gb = Gb/(wid*hei);
+		System.out.println("Gb "+ Gb);
+
+		T = alfa*Gb;
+
 		for (int i = 0; i < wid; i++) {
 			for (int j = 0; j < hei; j++) {
-				nova.setPixel(i, j, auxV[i][j] , auxV[i][j] , auxV[i][j]);
+				if(G[i][j] >= T){
+					nova.setPixel(i, j, 255, 255, 255);
+				}else{
+					nova.setPixel(i, j, 0, 0, 0);
+				}
+
 			}
 		}
 	}
 
+	public void thinning(){
+		int wid = nova.getWidth();
+		int hei = nova.getHeight();
+		LinkedList<Coord> toChange = new LinkedList<Coord>();
+		boolean mudou;
+		int T = 0;
+		int N = 0;
+
+		do{
+			mudou = false;
+
+			for (int i = 1; i < img.length-1; i++) {
+				for (int j = 1; j < img[i].length-1; j++) {
+					if(img[i][j] == 1){
+						N = getN(i,j);
+						T = getT(i,j);
+
+						if(T == 1 && N >= 2 && N <= 6 && (img[i-1][j]*img[i][j+1]*img[i+1][j])==0 && (img[i][j+1]*img[i+1][j]*img[i][j-1])==0){
+							toChange.add(new Coord(i,j));
+							
+							mudou = true;
+						}
+					}
+				}
+			}
+			
+			for(Coord c: toChange){
+				img[c.x][c.y] = 0;
+			}
+			toChange.clear();
+			
+			for (int i = 1; i < img.length-1; i++) {
+				for (int j = 1; j < img[i].length-1; j++) {
+					if(img[i][j] == 1){
+						N = getN(i,j);
+						T = getT(i,j);
+
+						if(T == 1 && N >= 2 && N <= 6 && (img[i-1][j]*img[i][j+1]*img[i][j-1])==0 && (img[i-1][j]*img[i+1][j]*img[i][j-1])==0){
+							toChange.add(new Coord(i,j));
+							
+							mudou = true;
+						}
+					}
+				}
+			}
+			for(Coord c: toChange){
+				img[c.x][c.y] = 0;
+			}
+			toChange.clear();
+
+		}while(mudou);
+
+		for (int i = 0; i < img.length; i++) {
+			for (int j = 0; j < img[i].length; j++) {
+				if(img[i][j] == 1){
+					nova.setPixel(i, j, 255,255,255);
+				}else{
+					nova.setPixel(i, j, 0, 0, 0);
+				}
+			}
+		}
+	}
+
+	int getN(int i, int j){
+		return img[i-1][j-1]+img[i-1][j]+img[i-1][j+1]+img[i][j+1]+img[i+1][j+1]+img[i+1][j]+img[i+1][j-1]+img[i][j-1];
+	}
+
+	int getT(int i, int j){
+		int count = 0;
+
+		if(img[i-1][j] == 0 && img[i-1][j+1] == 1){
+			count++;
+		}
+
+		if(img[i-1][j+1] == 0 && img[i][j+1] == 1){
+			count++;
+		}
+
+		if(img[i][j+1] == 0 && img[i+1][j+1] == 1){
+			count++;
+		}
+
+		if(img[i+1][j+1] == 0 && img[i+1][j] == 1){
+			count++;
+		}
+
+		if(img[i+1][j] == 0 && img[i+1][j-1] == 1){
+			count++;
+		}
+
+		if(img[i+1][j-1] == 0 && img[i][j-1] == 1){
+			count++;
+		}
+
+		if(img[i][j-1] == 0 && img[i-1][j-1] == 1){
+			count++;
+		}
+
+		if(img[i-1][j-1] == 0 && img[i-1][j] == 1){
+			count++;
+		}
+
+		return count;
+	}
+
+	void atualizarImgPB(){
+		for (int i = 0; i < img.length; i++) {
+			for (int j = 0; j < img[i].length; j++) {
+				if(nova.getB(i, j) == 255){
+					img[i][j] = 1;
+				}else{
+					img[i][j] = 0;
+				}
+			}
+		}
+	}
 	/**
 	 * Método para aplicar um filtro passa-alta
 	 */
@@ -358,13 +487,19 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 		//		Defina uma matriz 3x3 com os valores corretos e chame o método applyKernel.
 		//		ex: float[][] matriz = { 0, 0, 0 } , { 0 , 0, 0 } , { 0, 0 ,0 }};
 		//		    applyKernel(matriz);
-		
-		
+		int wid = nova.getWidth();
+		int hei = nova.getHeight();
+		img = new int[wid][hei];
+
+
 		float[][] vertical = {{1,2,1}, {0,0,0}, {-1,-2,-1}};
 		float[][] horizontal = {{-1,0,1}, {-2,0,2}, {-1,0,1}};
-		
+
 		applyKernel(vertical, horizontal);
+		atualizarImgPB();
 		
+		thinning();
+
 	}
 
 	/**
@@ -391,9 +526,9 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 		//		componente se transformam no tom mï¿½dio de cada intervalo 
 		//		(0..25 = 12, 26..50 = 38, ...). 
 		//   Experimente executar e testar nas imagens disponibilizadas.
-		
+
 	}	
-	
+
 	/**
 	 * Método que converte a imagem para tons de sépia.
 	 */       
@@ -413,3 +548,12 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 	}		
 }
 
+class Coord{
+	public int x;
+	public int y;
+	
+	public Coord(int x, int y){
+		this.x = x;
+		this.y = y;
+	}
+}
