@@ -15,6 +15,8 @@ import javax.media.opengl.glu.*;
 import com.sun.opengl.util.*;
 
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class RendererImagem extends MouseAdapter implements GLEventListener, KeyListener
@@ -28,7 +30,12 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 	private Imagem imgs[], nova;
 	private int sel;
 
-	private int img[][];
+	private int img[][], gray[][];
+	private LinkedList<Aresta> edges;
+	private int [][]GV;
+	private int [][]GH;
+	private boolean temAresta[][];
+	private ArrayList<Double> WPSI;
 	/**
 	 * Construtor da classe RendererImagem que recebe um array com as imagens
 	 */
@@ -105,18 +112,7 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 	 */  
 	public void displayChanged(GLAutoDrawable drawable, boolean modeChanged, boolean deviceChanged) { }
 
-	/**
-	 * Método da classe MouseAdapter que estÃ¡ sendo sobrescrito para gerenciar os 
-	 * eventos de clique de mouse, de maneira que seja feito zoom in e zoom out.
-	 */  
-	public void mouseClicked(MouseEvent e)
-	{
-		if (e.getButton() == MouseEvent.BUTTON1) // botÃ£o 1
-		{ }
-		if (e.getButton() == MouseEvent.BUTTON3) // botÃ£o 2
-		{ }
-		glDrawable.display();
-	}
+	
 
 	/**
 	 * Método definido na interface KeyListener que estÃ¡ sendo implementado para, 
@@ -149,30 +145,13 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 			System.out.println("Grayscale");
 			convertToGrayScale();
 			break;     
-		case KeyEvent.VK_3:		// Para converter a imagem para preto e branco  
-			System.out.println("B&W");
-			convertToGrayScale();
-			convertToBlackAndWhite();
-			break;
+		
 		case KeyEvent.VK_4:		// Para aplicar um filtro passa-alta (realce de bordas)
 			System.out.println("High pass");
 			convertToGrayScale();
-			highPass();
+			PSI();
 			break;
-		case KeyEvent.VK_5:		// Para aplicar um filtro passa-baixa (suavizaÃ§Ã£o)
-			System.out.println("Low pass");
-			convertToGrayScale();
-			lowPass();
-			break;
-		case KeyEvent.VK_6:		// Para gerar a imagem atravï¿½s da tï¿½cnica de posterizaï¿½Ã£o
-			System.out.println("Posterize");
-			posterize();
-			break; 	
-		case KeyEvent.VK_7:		// Para converter a imagem para tons de sï¿½pia  
-			System.out.println("Sepia");
-			convertToGrayScale();
-			sepia();
-			break; 
+		
 		case KeyEvent.VK_ESCAPE:	System.exit(0);
 		break;
 		}  
@@ -203,6 +182,8 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 
 		int R=0, G=0, B=0;
 		int cinza = 0;
+		
+		gray = new int [nova.getWidth()][nova.getHeight()];
 
 		for (int i = 0; i < nova.getWidth(); i++) {
 			for (int j = 0; j < nova.getHeight(); j++) {
@@ -211,7 +192,7 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 				B = nova.getB(i, j);
 
 				cinza = (R+G+B)/3;
-
+				gray[i][j] = cinza;
 				nova.setPixel(i, j, cinza, cinza, cinza);
 			}
 		}
@@ -220,49 +201,7 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 
 	}    
 
-	/**
-	 * Método que converte a imagem de tons de cinza para preto e branco.
-	 */       
-	public void convertToBlackAndWhite() 
-	{ 
-		// Tarefa 2:
-		//		Uma forma de segmentar/transformar as imagens para P&B é a
-		//		limiarizaïção (thresholding). Se o valor do pixel for menor que o valor do
-		//		limiar a cor deve ser preta, caso contrário deve ser branca.
-		//		Implemente essa técnica e varie o valor do limiar para 
-		//		números pequenos como 10 ou 15 e números grandes como 100 e 150.
-		//		Altere apenas o atributo nova.
-		//      Experimente executar e testar nas imagens disponibilizadas.
-
-		// Tarefa 3:
-		//		Agora apenas mude o valor do limiar da tarefa 2 para um número 
-		//		que represente a média entre os valores de densidade encontrados 
-		//		na imagem. Altere apenas o atributo nova.
-		//      Experimente executar e testar nas imagens disponibilizadas.		
-
-		int media = 0;
-		int wid = nova.getWidth();
-		int hei = nova.getHeight();
-
-		for (int i = 0; i < wid; i++) {
-			for (int j = 0; j < hei; j++) {
-				media += nova.getB(i, j);
-			}
-		}
-
-		media = media /(wid*hei);
-
-		for (int i = 0; i < wid; i++) {
-			for (int j = 0; j < hei; j++) {
-				if(nova.getB(i, j) > media){
-					nova.setPixel(i, j, 0, 0, 0);
-
-				}else{
-					nova.setPixel(i, j, 255, 255, 255);
-				}
-			}
-		}
-	}
+	
 
 	public void negative(){
 		int actR = 0,actG = 0,actB = 0;
@@ -286,18 +225,13 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 		}
 	}
 
-	/**
-	 * Método para aplicar um kernel (filtro) qualquer a uma imagem
-	 * Deve receber uma matrix 3x3, e aplica este Ã  imagem original,
-	 * alterando a imagem "nova"
-	 */
 	public void applyKernel(float [][]vert, float[][] hor){
-		int count =0;
+
 		int wid = nova.getWidth();
 		int hei = nova.getHeight();
-		int [][]GV = new int[wid][hei];
-		int [][]GH = new int[wid][hei];
-		double [][]G = new double[wid][hei];
+		this.GV = new int[wid][hei];
+		this.GH = new int[wid][hei];
+
 		double Gb = 0;
 		double alfa = 4.7;
 		double T = 0;
@@ -307,38 +241,21 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 			for(int y=0; y<hei-2; y++){
 
 				int somav = 0;
-				int somah = 0;
 
 				for(int i=0; i<3; i++){
 					for(int j=0; j<3; j++){
 						int p = nova.getR(x+i,y+j);
 
-						somav += p * vert[i][j];
-						somah += p * hor[i][j]; 
-
-
-						if(count<20){
-							System.out.println(p +" "+ vert[i][j]);
-
-							if(i+j == 4){
-								System.out.println(somav);
-								System.out.println();
-							}else{
-								System.out.println("parcial: "+somav);
-							}
-						}
+						somav += p * vert[i][j];					
 
 					}
 				}
-				count++;
 
-				GV[x+1][y+1] =(int) somav;
+				this.GV[x+1][y+1] =(int) somav;
 
-				GH[x+1][y+1] =(int) somah;
-
-				double r = (somah * somah) + (somav * somav);
+				double r = (somav * somav);
 				r = Math.sqrt(r);
-				G[x+1][y+1] = r;
+				
 				Gb += r;
 			}
 		}
@@ -351,7 +268,7 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 
 		for (int i = 0; i < wid; i++) {
 			for (int j = 0; j < hei; j++) {
-				if(G[i][j] >= T){
+				if(GV[i][j] >= T){
 					nova.setPixel(i, j, 255, 255, 255);
 				}else{
 					nova.setPixel(i, j, 0, 0, 0);
@@ -362,8 +279,7 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 	}
 
 	public void thinning(){
-		int wid = nova.getWidth();
-		int hei = nova.getHeight();
+		
 		LinkedList<Coord> toChange = new LinkedList<Coord>();
 		boolean mudou;
 		int T = 0;
@@ -477,16 +393,246 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 			}
 		}
 	}
-	/**
-	 * Método para aplicar um filtro passa-alta
-	 */
-	public void highPass()
+	
+	public void identifyEdges(){
+		int wid = nova.getWidth();
+		int hei = nova.getHeight();
+		
+		temAresta = new boolean[wid][hei];
+		this.edges = new LinkedList<Aresta>();
+		
+		for (int i = 0; i < img.length; i++) {
+			for (int j = 0; j < img[i].length; j++) {
+				if(img[i][j] == 1 && !temAresta[i][j]){
+					Aresta e = new Aresta(new Coord(i,j));
+					temAresta[i][j] = true;
+					this.edges.add(e);
+					verificarViz(wid, hei, i, j, img);
+				}
+			}
+		}
+		
+		int count = 0;
+		ArrayList<Integer> removidos = new ArrayList<Integer>();
+		
+		for (Aresta e : edges) {
+			e.imprimirPts();
+			if(e.getTamanho()== 1){
+				removidos.add(count);
+				System.out.print(" removeu");
+			}
+			System.out.println();
+			count++;
+		}
+		System.out.println("\narestas: "+edges.size()+"\n");
+		count = 0;
+		for (Integer i : removidos) {
+			edges.remove(i.intValue()-count);
+			count ++;
+		}
+		
+		System.out.println("\narestas: "+edges.size()+"\n");
+	}
+	
+	public void verificarViz(int wid, int hei,int x, int y, int[][]imag){
+		if(x > 0 && !temAresta[x-1][y] && imag[x-1][y] == 1){
+			edges.getLast().adicionar(new Coord(x-1,y));
+			temAresta[x-1][y] = true;
+			verificarViz(wid, hei, x-1, y,imag);
+		}
+		
+		if(x < wid-1 && !temAresta[x+1][y] && imag[x+1][y] == 1){
+			edges.getLast().adicionar(new Coord(x+1,y));
+			temAresta[x+1][y] = true;
+			verificarViz(wid, hei, x+1, y,imag);
+		}
+		
+		if(y > 0 && !temAresta[x][y-1] && imag[x][y-1] == 1){
+			edges.getLast().adicionar(new Coord(x,y-1));
+			temAresta[x][y-1] = true;
+			verificarViz(wid, hei, x, y-1,imag);
+		}
+		
+		if(y < hei-1 && !temAresta[x][y+1] && imag[x][y+1] == 1){
+			edges.getLast().adicionar(new Coord(x,y+1));
+			temAresta[x][y+1] = true;
+			verificarViz(wid, hei, x, y+1,imag);
+		}
+		
+		if(x > 0 && y > 0 && !temAresta[x-1][y-1] && imag[x-1][y-1] == 1){
+			edges.getLast().adicionar(new Coord(x-1,y-1));
+			temAresta[x-1][y-1] = true;
+			verificarViz(wid, hei, x-1, y-1,imag);
+		}
+		
+		if(x < wid-1 && y > 0 && !temAresta[x+1][y-1] && imag[x+1][y-1] == 1){
+			edges.getLast().adicionar(new Coord(x+1,y-1));
+			temAresta[x+1][y-1] = true;
+			verificarViz(wid, hei, x+1, y-1,imag);
+		}
+		
+		if(x < wid-1 && y < hei-1 && !temAresta[x+1][y+1] && imag[x+1][y+1] == 1){
+			edges.getLast().adicionar(new Coord(x+1,y+1));
+			temAresta[x+1][y+1] = true;
+			verificarViz(wid, hei, x+1, y+1,imag);
+		}
+		
+		if(x > 0 && y < hei-1 && !temAresta[x-1][y+1] && imag[x-1][y+1] == 1){
+			edges.getLast().adicionar(new Coord(x-1,y+1));
+			temAresta[x-1][y+1] = true;
+			verificarViz(wid, hei, x-1, y+1,imag);
+		}
+	}
+	
+	public void edgeWidth(){
+		int wid = nova.getWidth();
+		int count = 1;
+		ArrayList<Double> allWx = new ArrayList<Double>();
+		ArrayList<Double> allMx = new ArrayList<Double>();
+		WPSI = new ArrayList<Double>();
+			
+		for (Aresta e : edges) {
+			double Waux = 0;
+			double Wx = 0;
+			int Wup = 0;
+			int Wdown = 0;
+			double Mx = 0;
+			
+			for (Coord c : e.pontos) {
+				double Imax = 0;
+				double Imin = 1;
+				int esq = c.x -10;
+				int dir = c.x +10;
+				int y = c.y;
+				
+				if(esq < 0){
+					esq = 0;
+				}
+				if(dir >= wid){
+					dir = wid-1;
+				}
+				
+				for (int i = esq; i <= dir; i++) {
+					if(i != c.x){
+						double Iaux = (double)gray[i][y]/255;
+						if(Iaux > Imax){
+							Imax = Iaux;
+							Wup = i;
+						}
+						
+						if(Iaux < Imin){
+							Imin = Iaux;
+							Wdown = i;
+						}
+					}
+				}
+				Waux = Wup - Wdown;
+				if(Waux < 0 ){
+					Waux *= -1;
+				}
+		
+				double dif = Imax - Imin;
+				if(dif < 0 ){
+					dif *= -1;
+				}
+		
+				Wx += Waux;
+				
+				Mx += dif/Wx;
+			}
+			
+			Wx = Wx/e.getTamanho();
+			Mx = Mx/e.getTamanho();
+			allWx.add(Wx);
+			allMx.add(Mx);
+			System.out.println("aresta "+count+ " W(x): "+Wx+" M(x): "+Mx);
+			count++;
+		}
+		
+		for (int i = 0; i< allMx.size(); i++) {
+			double psi =0;
+			if(allWx.get(i).doubleValue() >= 3.0){
+				psi = allWx.get(i).doubleValue() - allMx.get(i).doubleValue();
+			}else{
+				psi = allWx.get(i).doubleValue();
+			}
+			WPSI.add(psi);
+			
+		}
+		
+	}
+	
+	public void sharpness(){
+		int wid = nova.getWidth();
+		int hei = nova.getHeight();
+		int bWid = 0;
+		int bHei = 0;
+		double localPSI[][];
+		
+		if(wid%32 != 0){
+			bWid = (wid/32)+1;
+		}else{
+			bWid = (wid/32);
+		}
+		if(hei%32 != 0){
+			bHei = (hei/32)+1;
+		}else{
+			bHei = (hei/32);
+		}
+		
+		localPSI = new double[bWid][bHei];
+		
+		for (int i = 0; i < wid; i +=32) {
+			for (int j = 0; j < hei; j +=32) {
+				ArrayList<Integer> insiders = new ArrayList<Integer>();
+				for (int k = 0;k < edges.size();k++) {
+					if(edges.get(k).isInside(i, j)){
+						insiders.add(k);
+					}
+				}
+				double media =0;
+				if(insiders.size()>2){
+					for (Integer in : insiders) {
+						media += WPSI.get(in.intValue());
+					}
+					media = media/insiders.size();
+				}
+				
+				localPSI[i/32][j/32] = media;
+				
+			}
+			System.out.println();
+		}
+		
+		int per = (int) ((bWid*bHei)*0.18);
+		double mediaGl = 0;	
+		
+		for (int p = 0; p < per; p++) {
+			double maior = 0;
+			int im = 0;
+			int jm = 0;
+			for (int i = 0; i < localPSI.length; i++) {
+				for (int j = 0; j < localPSI[i].length; j++) {
+					if(localPSI[i][j] > maior){
+						maior = localPSI[i][j];
+						im = i;
+						jm = j;
+					}
+				}
+			}
+			mediaGl += maior;
+			localPSI[im][jm] = 0;
+			
+		}
+		
+		mediaGl = mediaGl/per;
+		
+		System.out.println("Global Sharpness: "+mediaGl);
+	}
+	
+	public void PSI()
 	{
-		// Tarefa 4:
-		//		Implemente um filtro passa-alta (realce de bordas). 
-		//		Defina uma matriz 3x3 com os valores corretos e chame o método applyKernel.
-		//		ex: float[][] matriz = { 0, 0, 0 } , { 0 , 0, 0 } , { 0, 0 ,0 }};
-		//		    applyKernel(matriz);
+		
 		int wid = nova.getWidth();
 		int hei = nova.getHeight();
 		img = new int[wid][hei];
@@ -499,53 +645,14 @@ public class RendererImagem extends MouseAdapter implements GLEventListener, Key
 		atualizarImgPB();
 		
 		thinning();
-
+		
+		identifyEdges();
+		
+		edgeWidth();
+		sharpness();
 	}
 
-	/**
-	 * Método para aplicar um filtro passa-baixa
-	 */
-	public void lowPass()
-	{
-		// Tarefa 5:
-		//		Implemente um filtro passa-baixa (suavização). 
-		//		Defina uma matriz 3x3 com os valores corretos e chame o método applyKernel.
-		//		ex: float[][] matriz = { 0, 0, 0 } , { 0 , 0, 0 } , { 0, 0 ,0 }};
-		//		    applyKernel(matriz);		
-	}
-
-	/**
-	 * Método que altera a imagem através da técnica de posterização.
-	 */       
-	public void posterize() 
-	{ 
-		// Tarefa 6:
-		//		Gere uma imagem atravï¿½s da tï¿½cnica de posterizaï¿½ï¿½o, que simplesmente 
-		//		reduz a quantidade de tons diferentes de cada componente de cor. Por 
-		//		exemplo, se quisermos posterizar para 10 intensidades, 25 tons de cada 
-		//		componente se transformam no tom mï¿½dio de cada intervalo 
-		//		(0..25 = 12, 26..50 = 38, ...). 
-		//   Experimente executar e testar nas imagens disponibilizadas.
-
-	}	
-
-	/**
-	 * Método que converte a imagem para tons de sépia.
-	 */       
-	public void sepia() 
-	{ 
-		// Tarefa 7:
-		//		Gere uma imagem em tons de sï¿½pia, atravï¿½s do seguinte algoritmo:
-		//		- A imagem deve estar ema tons de cinza; 
-		//		- Faï¿½a as sombras (cinzas mais escuros) ficarem ainda mais escuras (0 <= cinza < 60); 
-		//		- Faï¿½a os cinzas mï¿½dios ficarem meio amarronzados (60 <= cinza < 190), reduzindo o azul; 
-		//		- Faï¿½a as partes claras (cinzas claros) ficarem meio amarelados (190 <= cinza):
-		//			aumente vermelho e verde
-		//			ou diminua o azul. 
-		//      Experimente executar e testar nas imagens disponibilizadas.		
-
-
-	}		
+	
 }
 
 class Coord{
@@ -556,4 +663,51 @@ class Coord{
 		this.x = x;
 		this.y = y;
 	}
+}
+
+class Aresta{
+	
+	public LinkedList<Coord> pontos = new LinkedList<Coord>();
+	private int tamanho;
+	
+	public Aresta(Coord init){
+		this.pontos.add(init);
+		this.setTamanho(1);
+	}
+	
+	public void adicionar(Coord x){
+		this.pontos.add(x);
+		setTamanho(1);
+	}
+	
+	void imprimirPts(){
+		for (Coord p : pontos) {
+			System.out.print("x: "+p.x+" y: "+p.y+" /");
+		}
+		
+	}
+	
+	public boolean isInside(int i, int j){
+		boolean inside = false;
+		
+		for (Coord c : this.pontos) {
+			if(c.x >= i && c.x< i+32){
+				if (c.y >=j && c.y < j+32) {
+					inside = true;
+				}
+			}
+		}
+		
+		return inside;
+	}
+	
+	public int getTamanho() {
+		return tamanho;
+	}
+
+	public void setTamanho(int tamanho) {
+		this.tamanho += tamanho;
+	}
+	
+	
 }
