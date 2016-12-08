@@ -23,7 +23,7 @@ public class ExemploImagem
 	{
 		// Cria janela
 		JFrame janela = new JFrame("Imagens em OpenGL");   
-		janela.setBounds(50,100,1000,600); 
+		janela.setBounds(50,100,1300,600); 
 		janela.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		BorderLayout layout = new BorderLayout(); 
@@ -38,17 +38,12 @@ public class ExemploImagem
 		c.setGreenBits(8);
 		c.setAlphaBits(8); 
 
-		Imagem im[] = new Imagem[9];
+		Imagem im[] = new Imagem[21];
 		// Cria os objetos Imagem a partir de arquivos JPEG
-		im[0] = new Imagem("abbey.jpg");
-		im[1] = new Imagem("churras.jpg");
-		im[2] = new Imagem("eye.jpg");
-		im[3] = new Imagem("flags.jpg");
-		im[4] = new Imagem("flower.jpg");
-		im[5] = new Imagem("rocks.jpg");
-		im[6] = new Imagem("shells.jpg");
-		im[7] = new Imagem("shells2.jpg");
-		im[8] = new Imagem("sushi24bit.jpg");
+		for (int i = 0; i < im.length; i++) {
+			im[i] = new Imagem("img"+i+".jpg");
+		}
+
 
 		// Cria o objeto que irá gerenciar os eventos
 		renderer = new RendererImagem(im);
